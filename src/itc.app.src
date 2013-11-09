@@ -1,0 +1,7 @@
+{application, itc,
+ [{description, "Interval Tree Clocks"},
+  {vsn, "1.0.0"},
+  {modules, [itc]},
+  {registered, []},
+  {applications, [kernel, stdlib]}]}.
+
