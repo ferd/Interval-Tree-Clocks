@@ -105,17 +105,17 @@ master_to_replicas(_Config) ->
     Master3 = itc:event(Master2),
     %% Replication (peek) and merging (join) should work with the base
     %% state
-    ?assert(peek_equal(Master0, ReplicaA0)),
-    ?assert(peek_equal(Master0, itc:join(ReplicaA0,Master0))),
-    ?assert(peek_equal(Master0,
-                       itc:join(ReplicaA0,element(1,itc:peek(Master0))))),
+    ?assert(equal(itc:peek(Master0), itc:peek(ReplicaA0))),
+    ?assert(equal(itc:peek(Master0), itc:join(ReplicaA0,Master0))),
+    ?assert(equal(itc:peek(Master0),
+                  itc:join(ReplicaA0,itc:peek(Master0)))),
     %% Replicate them in order from peek and it should work
-    ReplicaA1 = itc:join(ReplicaA0, element(1,itc:peek(Master1))),
-    ReplicaA2 = itc:join(ReplicaA1, element(1,itc:peek(Master2))),
-    ReplicaA3 = itc:join(ReplicaA2, element(1,itc:peek(Master3))),
-    ?assert(peek_equal(Master1, ReplicaA1)),
-    ?assert(peek_equal(Master2, ReplicaA2)),
-    ?assert(peek_equal(Master3, ReplicaA3)),
+    ReplicaA1 = itc:join(ReplicaA0, itc:peek(Master1)),
+    ReplicaA2 = itc:join(ReplicaA1, itc:peek(Master2)),
+    ReplicaA3 = itc:join(ReplicaA2, itc:peek(Master3)),
+    ?assert(equal(itc:peek(Master1), itc:peek(ReplicaA1))),
+    ?assert(equal(itc:peek(Master2), itc:peek(ReplicaA2))),
+    ?assert(equal(itc:peek(Master3), itc:peek(ReplicaA3))),
     itc:join(Master3,ReplicaA3),
     itc:join(Master3,ReplicaA2),
     itc:join(Master3,ReplicaA1),
@@ -126,7 +126,7 @@ master_to_replicas(_Config) ->
     %% from possibly many source
     ?assert(smaller(ReplicaB0,ReplicaA3)),
     ?assert(larger(ReplicaA3,ReplicaB0)),
-    ReplicaB1 = itc:join(ReplicaB0, element(1, itc:peek(ReplicaA3))),
+    ReplicaB1 = itc:join(ReplicaB0, itc:peek(ReplicaA3)),
     ?assert(equal(ReplicaB1, ReplicaA3)),
     ?assert(equal(ReplicaB1, Master3)),
     ?assertNot(smaller(ReplicaB1, Master3)),
@@ -148,21 +148,21 @@ master_to_master(_Config) ->
     ?assert(clash(MasterB2, MasterC1)),
     %% Merges from peek / join work, and supercede the previous values
     ?assert(smaller(MasterC1,
-                    itc:join(MasterC1, element(1, itc:peek(MasterB2))))),
+                    itc:join(MasterC1, itc:peek(MasterB2)))),
     ?assert(smaller(MasterC1, itc:join(MasterC1, MasterB2))),
     ?assert(smaller(MasterC1,
-                    itc:join(MasterC1, element(1, itc:peek(MasterA1))))),
+                    itc:join(MasterC1, itc:peek(MasterA1)))),
     ?assert(smaller(MasterC1, itc:join(MasterC1, MasterA1))),
     ?assert(smaller(MasterB2,
-                    itc:join(MasterC1, element(1, itc:peek(MasterB2))))),
+                    itc:join(MasterC1, itc:peek(MasterB2)))),
     ?assert(smaller(MasterB2, itc:join(MasterC1, MasterB2))),
     ?assert(smaller(MasterA1,
-                    itc:join(MasterC1, element(1, itc:peek(MasterA1))))),
+                    itc:join(MasterC1, itc:peek(MasterA1)))),
     ?assert(smaller(MasterA1, itc:join(MasterC1, MasterA1))),
     %% Both merged entries are equal to each other, and still clash
     %% with conflicting ones, but are bigger than sane ones.
-    MasterB3 = itc:join(MasterB2, element(1, itc:peek(MasterC1))),
-    MasterC2 = itc:join(MasterC1, element(1, itc:peek(MasterB2))),
+    MasterB3 = itc:join(MasterB2, itc:peek(MasterC1)),
+    MasterC2 = itc:join(MasterC1, itc:peek(MasterB2)),
     ?assert(equal(MasterB3, MasterC2)),
     ?assert(clash(MasterA1, MasterB3)),
     ?assert(clash(MasterA1, MasterC2)),
@@ -170,10 +170,6 @@ master_to_master(_Config) ->
     ?assert(smaller(MasterD0, MasterB3)),
     ?assert(smaller(MasterD0, MasterC2)).
 
-
-peek_equal(ClockA,ClockB) ->
-    equal(element(1,itc:peek(ClockA)),
-          element(1,itc:peek(ClockB))).
 
 equal(ClockA,ClockB) ->
     itc:leq(ClockA,ClockB) andalso itc:leq(ClockB,ClockA).

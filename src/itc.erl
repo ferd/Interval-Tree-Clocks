@@ -47,9 +47,12 @@ fork({I, E}) ->
 %% @doc Special case of a fork that creates an anonymous tree with
 %% events to transmit causal information without registering new events,
 %% meaning it should be used for replication.
--spec peek(tree()) -> {ReadOnly::tree(), tree()}.
-peek({I, E}) ->
-    {{0, E}, {I, E}}.
+%%
+%% Because the peek fork returns an anonymous tree and the original tree
+%% itself, the function only returns the modified one.
+-spec peek(tree()) -> ReadOnly::tree().
+peek({_I, E}) ->
+    {0, E}.
 
 %% @doc Adds a new event to the event component, i.e. marking that an item
 %% has been written to or updated.
