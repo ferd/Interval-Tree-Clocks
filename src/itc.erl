@@ -19,17 +19,41 @@
 -compile({inline, [{min,2}, {max,2}, {drop,2}, {lift,2}, {base,1},
                    {height,1}]}).
 
+-type id() :: non_neg_integer()
+            | {Left::id(), Right::id()}.
+-type event() :: non_neg_integer()
+               | {Base::non_neg_integer(), Left::event(), Right::event()}.
+-type tree() :: {id(), event()}.
+
+%%%%%%%%%%%%%%
+%%% PUBLIC %%%
+%%%%%%%%%%%%%%
+
+%% @doc Initial seed.
+-spec seed() -> tree().
 seed() -> {1, 0}.
 
+%% @doc Merge two forked trees
+-spec join(tree(), tree()) -> tree().
 join({I1, E1}, {I2, E2}) -> {sum(I1,I2), join_ev(E1, E2)}.
 
+%% @doc Split an Id into two related ones. This is used when you want
+%% to add a new replica to the entire set.
+-spec fork(tree()) -> {tree(), tree()}.
 fork({I, E}) ->
     {I1, I2} = split(I),
     {{I1, E}, {I2, E}}.
 
+%% @doc Special case of a fork that creates an anonymous tree with
+%% events to transmit causal information without registering new events,
+%% meaning it should be used for replication.
+-spec peek(tree()) -> {ReadOnly::tree(), tree()}.
 peek({I, E}) ->
     {{0, E}, {I, E}}.
 
+%% @doc Adds a new event to the event component, i.e. marking that an item
+%% has been written to or updated.
+-spec event(tree()) -> tree().
 event({I, E}) ->
     {I,
      case fill(I, E) of
@@ -40,9 +64,16 @@ event({I, E}) ->
             E1
      end}.
 
+%% @doc compares events from two trees to figure out if
+%% the first one is smaller than or equal to the second one.
+-spec leq(tree(), tree()) -> boolean().
 leq({_, E1}, {_, E2}) -> leq_ev(E1, E2).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%
+%%% PRIVATE %%%
+%%%%%%%%%%%%%%%
+
+%%% Comparison %%%
 
 leq_ev({N1, L1, R1}, {N2, L2, R2}) ->
     N1 =< N2 andalso
@@ -58,8 +89,8 @@ leq_ev(N1, {N2, _, _}) -> N1 =< N2;
 
 leq_ev(N1, N2) -> N1 =< N2.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Normal form
+
+%%% Normal form %%%
 
 norm_id({0, 0}) -> 0;
 norm_id({1, 1}) -> 1;
@@ -71,7 +102,7 @@ norm_ev({N, L, R}) ->
     M = min(base(L), base(R)),
     {N + M, drop(M, L), drop(M, R)}.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% fork/join helpers %%%
 
 sum(0, X) -> X;
 sum(X, 0) -> X;
@@ -83,8 +114,6 @@ split({0, I}) -> {I1, I2} = split(I), {{0, I1}, {0, I2}};
 split({I, 0}) -> {I1, I2} = split(I), {{I1, 0}, {I2, 0}};
 split({I1, I2}) -> {{I1, 0}, {0, I2}}.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 join_ev(E1={N1, _, _}, E2={N2, _, _}) when N1 > N2 -> join_ev(E2, E1);
 join_ev({N1, L1, R1}, {N2, L2, R2}) when N1 =< N2 ->
     D = N2 - N1,
@@ -92,6 +121,8 @@ join_ev({N1, L1, R1}, {N2, L2, R2}) when N1 =< N2 ->
 join_ev(N1, {N2, L2, R2}) -> join_ev({N1, 0, 0}, {N2, L2, R2});
 join_ev({N1, L1, R1}, N2) -> join_ev({N1, L1, R1}, {N2, 0, 0});
 join_ev(N1, N2) -> max(N1, N2).
+
+%%% event helpers %%%
 
 fill(0, E) -> E;
 fill(1, E={_, _, _}) -> height(E);
@@ -125,8 +156,6 @@ grow(I, N) when is_integer(N)->
     {H, E} = grow(I, {N, 0, 0}),
     {H + 1000, E}.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 height({N, L, R}) -> N + max(height(L), height(R));
 height(N) -> N.
 
@@ -145,7 +174,10 @@ max(X, _) -> X.
 min(X, Y) when X =< Y -> X;
 min(_, Y) -> Y.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%
+%%% Serializing API %%%
+%%%%%%%%%%%%%%%%%%%%%%%
+
 
 encode({I, E}) -> << (enci(I))/bits, (ence(E))/bits >>.
 
@@ -221,9 +253,7 @@ decn(<<1:1, R/bits>>, B, Acc) ->
     decn(R, B+1, Acc + (1 bsl B)).
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-len(D) -> size(encode(D)).
+len(D) -> byte_size(encode(D)).
 
 str({I, E}) -> [lists:flatten(stri(I)), lists:flatten(stre(E))].
 
