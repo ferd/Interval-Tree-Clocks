@@ -5,9 +5,7 @@ Classic causality tracking mechanisms, such as version vectors and vector clocks
 
 Interval Tree Clocks (ITC) is a new clock mechanism that can be used in scenarios with a dynamic number of participants, allowing a completely decentralized creation of processes/replicas without need for global identifiers. The mechanism has a variable size representation that adapts automatically to the number of existing entities, growing or shrinking appropriately.
 
-Here we provide reference implementations of ITCs in Java, C and Erlang, and appropriate import and export methods to a common serialized representation. In Sample Run we provide an example on how to use the API in both languages. Further information can be found here and full details in the Conference Paper, published in Opodis 2009.
-
-
+This repository gives a usable implementation in Erlang forked from the [original tri-lingual reference implementation](https://github.com/ricardobcl/Interval-Tree-Clocks). Further information can be found here and full details in the [Conference Paper, published in Opodis 2009](http://gsd.di.uminho.pt/members/cbm/ps/itc2008.pdf).
 
 ## Simple demo run
 
