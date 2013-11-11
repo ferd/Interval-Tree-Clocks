@@ -9,8 +9,6 @@ This repository gives a usable implementation in Erlang forked from the [origina
 
 ## Simple demo run
 
-
-
 ### Demo run
 
 The image shows a run from ITC witch is divided in sections. Each section represents the state of the system between operations (_fork_, _event_ or _join_) and is labeled with a letter. This letter maps the state of the operations presented in both demo programs.
@@ -67,4 +65,44 @@ ITCs encode the state needed to track causality in a stamp, composed of an event
 
 (*Peek* is a special case of fork that only copies the event component and creates a new stamp with a null id. It can be used to make messages that transport causal information.)
 
-TODO: Add version vector simulation example in Erlang
+
+### Simulating Version Vectors
+
+First replicas need to be created. A seed stamp (with a special id component) is first created and the desired number of replicas can be created by forking this initial seed. Bellow we create 4 replicas (`A`, `B`, `C`, and `D`):
+
+```erlang
+{A0,Tmp0} = itc:fork(itc:seed()),
+{B0,Tmp1} = itc:fork(Tmp0),
+{C0,D0} = itc:fork(Tmp1),
+```
+
+Since no events have been registered, these stamps all compare as equal. Since a stamp function `leq/2` (less or equal) is provided, stamps `X` and `Y` are equivalent when both `itc:leq(X,Y)` and `itc:leq(Y,X)` are true.
+
+Now, suppose that stamp `B` is associated to a ReplicaB and this replica was modified. We note this by doing:
+
+```erlang
+B1 = itc:event(B0),
+```
+
+Now stamp `B` is greater than all the others. We can do the same in stamp `D` to denote an update on ReplicaD:
+
+```erlang
+D1 = itc:event(D0),
+```
+
+These two stamps are now concurrent. Thus `itc:leq(B1,D1)` is false and `itc:leq(D1,B1)` is also false.
+
+Now suppose that we want to merge the updates in ReplicaB and ReplicaD. One way is to create a replica that reflects both updates:
+
+```erlang
+E0 = itc:join(B1,D1),
+```
+
+This stamp `E` will now have an id that joins the ids in `B` and `D`, and has an event component that holds both issued events. An alternative way, that keeps the number of replicas/stamps and does not form new ids, is to exchange events between both replicas:
+
+```erlang
+B2 = itc:join(B1, itc:peek(D1)),
+D2 = itc:join(D1, itc:peek(B1)),
+```
+
+Now, stamps `B` and `D` are no longer concurrent and will compare as equivalent, since they depict the same events. 

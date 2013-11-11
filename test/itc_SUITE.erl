@@ -6,7 +6,7 @@
 all() -> [{group, basic}, {group, replication}].
 
 groups() ->
-    [{basic, [parallel], [demo, comparison]},
+    [{basic, [parallel], [demo, version_vector, comparison]},
      {replication, [parallel], [master_to_replicas, master_to_master]}].
 
 %% Testing the demo code from README.markdown to make
@@ -52,6 +52,35 @@ demo(_Config) ->
     ?assertEqual(ABC0, {{1,0},{1,{0,1,0},1}}),
     % fill gap, 1/2 left, added: base 2
     ?assertEqual(ABC1, {{1,0},2}).
+
+%% Tests that the text from README about replicating Version Vectors
+%% with ITCs holds true to its description.
+version_vector(_Config) ->
+    {A0,Tmp0} = itc:fork(itc:seed()),
+    {B0,Tmp1} = itc:fork(Tmp0),
+    {C0,D0} = itc:fork(Tmp1),
+    %% Check comparisons
+    ?assert(equal(A0,B0)),
+    ?assert(equal(A0,C0)),
+    ?assert(equal(A0,D0)),
+    ?assert(equal(B0,C0)),
+    ?assert(equal(B0,D0)),
+    ?assert(equal(C0,D0)),
+    %% events to B & D
+    B1 = itc:event(B0),
+    D1 = itc:event(D0),
+    %% They clash
+    ?assertNot(itc:leq(B1,D1)),
+    ?assertNot(itc:leq(D1,B1)),
+    %% merged replica
+    E0 = itc:join(B1,D1),
+    %% merge both states
+    B2 = itc:join(B1, itc:peek(D1)),
+    D2 = itc:join(D1, itc:peek(B1)),
+    %% They all compare equivalently
+    ?assert(equal(B2,D2)),
+    ?assert(equal(B2,E0)),
+    ?assert(equal(D2,E0)).
 
 %% The comparison is based on the sequences of events and using
 %% leq/2 as an operator. Forks themselves should have no impact.
