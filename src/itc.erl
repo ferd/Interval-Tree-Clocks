@@ -12,6 +12,7 @@
 -module(itc).
 -author("Paulo Sergio Almeida <psa@di.uminho.pt>").
 
+-export([explode/1, rebuild/2]).
 -export([seed/0, event/1, join/2, fork/1, peek/1, leq/2]).
 -export([len/1, str/1, encode/1, decode/1]).
 
@@ -23,23 +24,34 @@
             | {Left::id(), Right::id()}.
 -type event() :: non_neg_integer()
                | {Base::non_neg_integer(), Left::event(), Right::event()}.
--type tree() :: {id(), event()}.
+-opaque clock() :: {id(), event()}.
+-export_type([id/0, event/0, clock/0]).
 
 %%%%%%%%%%%%%%
 %%% PUBLIC %%%
 %%%%%%%%%%%%%%
 
+%% @doc splits the Id from the Event part of the clock.
+-spec explode(clock()) -> {id(), event()}.
+explode({Id, Event}) -> {Id, Event}.
+
+%% @doc takes an id and an event counter and combines them
+%% into a clock.
+-spec rebuild(id(), 'undefined' | event()) -> clock().
+rebuild(Id, undefined) -> {Id, 0};
+rebuild(Id, Event) -> {Id, Event}.
+
 %% @doc Initial seed.
--spec seed() -> tree().
+-spec seed() -> clock().
 seed() -> {1, 0}.
 
 %% @doc Merge two forked trees
--spec join(tree(), tree()) -> tree().
+-spec join(clock(), clock()) -> clock().
 join({I1, E1}, {I2, E2}) -> {sum(I1,I2), join_ev(E1, E2)}.
 
 %% @doc Split an Id into two related ones. This is used when you want
 %% to add a new replica to the entire set.
--spec fork(tree()) -> {tree(), tree()}.
+-spec fork(clock()) -> {clock(), clock()}.
 fork({I, E}) ->
     {I1, I2} = split(I),
     {{I1, E}, {I2, E}}.
@@ -50,13 +62,13 @@ fork({I, E}) ->
 %%
 %% Because the peek fork returns an anonymous tree and the original tree
 %% itself, the function only returns the modified one.
--spec peek(tree()) -> ReadOnly::tree().
+-spec peek(clock()) -> ReadOnly::clock().
 peek({_I, E}) ->
     {0, E}.
 
 %% @doc Adds a new event to the event component, i.e. marking that an item
 %% has been written to or updated.
--spec event(tree()) -> tree().
+-spec event(clock()) -> clock().
 event({I, E}) ->
     {I,
      case fill(I, E) of
@@ -69,7 +81,7 @@ event({I, E}) ->
 
 %% @doc compares events from two trees to figure out if
 %% the first one is smaller than or equal to the second one.
--spec leq(tree(), tree()) -> boolean().
+-spec leq(clock(), clock()) -> boolean().
 leq({_, E1}, {_, E2}) -> leq_ev(E1, E2).
 
 %%%%%%%%%%%%%%%
