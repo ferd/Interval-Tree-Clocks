@@ -119,3 +119,23 @@ You may obtain a copy of the License at:
 http://choosealicense.com/licenses/lgpl-v3/
 
 http://www.gnu.org/licenses/lgpl.html
+
+
+## Using
+
+For Rebar3 usage with hex packages:
+
+```erlang
+{deps, [
+    {itc, "1.0.0", {pkg, interval_tree_clocks}}
+]}.
+```
+
+And for usage with the git repository:
+
+```erlang
+{deps, [
+    {itc, {git, "https://github.com/ferd/interval-tree-clocks", {branch, "main"}}}
+]}.
+```
+
