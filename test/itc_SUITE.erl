@@ -1,7 +1,7 @@
 -module(itc_SUITE).
 -include_lib("common_test/include/ct.hrl").
 -include_lib("eunit/include/eunit.hrl").
--compile(export_all).
+-compile([nowarn_export_all, export_all]).
 
 all() -> [{group, basic}, {group, replication}].
 

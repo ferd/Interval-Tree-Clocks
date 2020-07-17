@@ -3,5 +3,12 @@
   {vsn, "1.0.0"},
   {modules, [itc]},
   {registered, []},
-  {applications, [kernel, stdlib]}]}.
+  {applications, [kernel, stdlib]},
+
+  {licenses, ["LGPL 3.0"]},
+  {pkg_name, interval_tree_clocks},
+  {links, [{"Github", "https://github.com/ferd/interval-tree-clocks"},
+           {"paper", "https://gsd.di.uminho.pt/members/cbm/ps/itc2008.pdf"}
+          ]}
+]}.
 
