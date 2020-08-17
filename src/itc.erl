@@ -1,14 +1,14 @@
-%% ``The contents of this file are subject to the Erlang Public License,
+%% The contents of this file are subject to the Erlang Public License,
 %% Version 1.1, (the "License"); you may not use this file except in
 %% compliance with the License. You should have received a copy of the
 %% Erlang Public License along with this software. If not, it can be
 %% retrieved via the world wide web at http://www.erlang.org/.
-%% 
+%%
 %% Software distributed under the License is distributed on an "AS IS"
 %% basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
 %% the License for the specific language governing rights and limitations
 %% under the License.
-%% 
+%%
 -module(itc).
 -author("Paulo Sergio Almeida <psa@di.uminho.pt>").
 
@@ -31,11 +31,11 @@
 %%% PUBLIC %%%
 %%%%%%%%%%%%%%
 
-%% @doc splits the Id from the Event part of the clock.
+%% @doc Splits the Id from the Event part of the clock.
 -spec explode(clock()) -> {id(), event()}.
 explode({Id, Event}) -> {Id, Event}.
 
-%% @doc takes an id and an event counter and combines them
+%% @doc Takes an id and an event counter and combines them
 %% into a clock.
 -spec rebuild(id(), 'undefined' | event()) -> clock().
 rebuild(Id, undefined) -> {Id, 0};
@@ -45,7 +45,7 @@ rebuild(Id, Event) -> {Id, Event}.
 -spec seed() -> clock().
 seed() -> {1, 0}.
 
-%% @doc Merge two forked trees
+%% @doc Merge two forked trees.
 -spec join(clock(), clock()) -> clock().
 join({I1, E1}, {I2, E2}) -> {sum(I1,I2), join_ev(E1, E2)}.
 
@@ -79,7 +79,7 @@ event({I, E}) ->
             E1
      end}.
 
-%% @doc compares events from two trees to figure out if
+%% @doc Compares events from two trees to figure out if
 %% the first one is smaller than or equal to the second one.
 -spec leq(clock(), clock()) -> boolean().
 leq({_, E1}, {_, E2}) -> leq_ev(E1, E2).
@@ -103,7 +103,6 @@ leq_ev({N1, L1, R1}, N2) ->
 leq_ev(N1, {N2, _, _}) -> N1 =< N2;
 
 leq_ev(N1, N2) -> N1 =< N2.
-
 
 %%% Normal form %%%
 
@@ -193,7 +192,6 @@ min(_, Y) -> Y.
 %%% Serializing API %%%
 %%%%%%%%%%%%%%%%%%%%%%%
 
-
 encode({I, E}) -> << (enci(I))/bits, (ence(E))/bits >>.
 
 decode(B) -> {I, BE} = deci(B), {E, <<>>} = dece(BE), {I, E}.
@@ -267,7 +265,6 @@ decn(<<0:1, R/bits>>, B, Acc) ->
 decn(<<1:1, R/bits>>, B, Acc) ->
     decn(R, B+1, Acc + (1 bsl B)).
 
-
 len(D) -> byte_size(encode(D)).
 
 str({I, E}) -> [lists:flatten(stri(I)), lists:flatten(stre(E))].
@@ -283,4 +280,3 @@ stre({N, 0, R}) -> [stre(N), "R", stre(R)];
 stre({N, L, R}) -> [stre(N), "(L", stre(L), "+R", stre(R), ")"];
 stre(N) when N > 0 -> integer_to_list(N);
 stre(_) -> "".
-
