@@ -118,7 +118,7 @@ For Rebar3 usage with hex packages:
 
 ```erlang
 {deps, [
-    {itc, "1.0.0", {pkg, interval_tree_clocks}}
+    {itc, "1.0.1", {pkg, interval_tree_clocks}}
 ]}.
 ```
 
@@ -149,3 +149,14 @@ And for use with the git repository:
     ]
   end
 ```
+
+## Changelog
+
+### 1.0.1
+
+- [add rebar.confg to fix mix source builds](https://github.com/ferd/Interval-Tree-Clocks/pull/2)
+- [Minor grammar and consistency fixes in documentation](https://github.com/ferd/Interval-Tree-Clocks/pull/1)
+
+### 1.0.0
+
+- Initial fork off the multilanguage ITC repository, and reworking for Erlang idiomatic usage.
